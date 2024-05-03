@@ -28,44 +28,6 @@ public class PlayerMovement : MonoBehaviour
     // animation stuff
     public Animator animator;
 
-    private void Start()
-    {
-        // to only situationally allow camera control
-        CinemachineCore.GetInputAxis = CustomInputAxis;
-    }
-
-    // Intercepts mouse movement and only allows the camera to be orbited if a mouse button
-    // is held down. 
-    // todo: camera zoom
-    private float CustomInputAxis(string axisName)
-    {
-        if (axisName.Equals("Mouse X"))
-        {
-            // must be holding down a mouse button to move camera
-            if (Input.GetMouseButton(0) || Input.GetMouseButton(1))
-            {
-                return Input.GetAxis("Mouse X");
-            }
-            else
-            {
-                return 0;
-            }
-        }
-        else if (axisName.Equals("Mouse Y"))
-        {
-            if (Input.GetMouseButton(0) || Input.GetMouseButton(1))
-            {
-                return Input.GetAxis("Mouse Y");
-            }
-            else
-            {
-                return 0;
-            }
-        }
-        Debug.Log(axisName);
-        return Input.GetAxis(axisName);
-    }
-
     void Update()
     {
         //isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
@@ -108,12 +70,6 @@ public class PlayerMovement : MonoBehaviour
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             StartCoroutine(AnimateJump());
-        }
-        
-        // debug
-        if (Input.mouseScrollDelta.y != 0)
-        {
-            Debug.Log("mwheel delta: " + Input.mouseScrollDelta);
         }
     }
 
