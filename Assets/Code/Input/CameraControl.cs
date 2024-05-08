@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Cinemachine;
 
 
@@ -15,6 +16,10 @@ using Cinemachine;
  */
 public class CameraControl : MonoBehaviour
 {
+    public bool isDragging = false;
+    public PlayerInput input;
+    private InputAction cameraPanning;
+
     // orbit values go top to bottom:
     private float[] minZoomHeights = { 6, 4, 0 };
     private float[] minZoomRadii = { 0.5f, 4, 5 };
@@ -52,45 +57,49 @@ public class CameraControl : MonoBehaviour
     {
         // to only situationally allow camera control
         CinemachineCore.GetInputAxis = CustomInputAxis;
+        cameraPanning = input.actions.FindAction("Pan Camera");
+    }
+
+    public void MouseHold(InputAction.CallbackContext context)
+    {
+        if (context.phase == InputActionPhase.Performed) // mouse button held
+        {
+            isDragging = true;
+        }
+        else if (context.phase == InputActionPhase.Canceled) // mouse button released
+        {
+            isDragging = false;
+        }
     }
 
     // Intercepts mouse movement and only allows the camera to be orbited if a mouse button
-    // is held down. 
+    // is held down. (Also hands Cinemachine new input system data. They *might* have patched it 
+    // to handle the new input system, based on this inspector pane? todo investigate later)
     private float CustomInputAxis(string axisName)
     {
-        if (axisName.Equals("Mouse X"))
+        if (isDragging)
         {
-            // must be holding down a mouse button to move camera
-            if (Input.GetMouseButton(0) || Input.GetMouseButton(1))
+            Vector2 cameraDelta = cameraPanning.ReadValue<Vector2>().normalized;
+            if (axisName.Equals("Mouse X"))
             {
-                return Input.GetAxis("Mouse X");
+                return cameraDelta.x;
             }
-            else
+            else if (axisName.Equals("Mouse Y"))
             {
-                return 0;
+                return cameraDelta.y;
             }
         }
-        else if (axisName.Equals("Mouse Y"))
-        {
-            if (Input.GetMouseButton(0) || Input.GetMouseButton(1))
-            {
-                return Input.GetAxis("Mouse Y");
-            }
-            else
-            {
-                return 0;
-            }
-        }
-        Debug.Log(axisName);
-        return Input.GetAxis(axisName);
+        return 0;
     }
 
     void Update()
     {
-        if (Input.mouseScrollDelta.y != 0)
-        {
-            UpdateZoomIndex(Input.mouseScrollDelta.y);
-        }
+        /*        if (Input.mouseScrollDelta.y != 0)
+                {
+                    UpdateZoomIndex(Input.mouseScrollDelta.y);
+                }*/
+
+        //Debug.Log(cameraPanning.ReadValue<Vector2>().normalized);
     }
 
     private void LateUpdate()

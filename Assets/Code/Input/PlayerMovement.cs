@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Cinemachine;
 
 public class PlayerMovement : MonoBehaviour
 {
     public CharacterController controller;
+    public PlayerInput input;
     public Transform cam;
 
     // later this will become part of PlayerState, most likely
@@ -20,6 +22,7 @@ public class PlayerMovement : MonoBehaviour
     public float gravity = -9.81f;
 
     public float turnSmoothingTime = 0.1f;
+    private InputAction movement;
     private float turnSmoothVelocity;
 
     // debug
@@ -27,6 +30,12 @@ public class PlayerMovement : MonoBehaviour
 
     // animation stuff
     public Animator animator;
+
+    private void Awake()
+    {
+        // we're using events for most things, but movement is POSSIBLY done more cleanly like this
+        movement = input.actions.FindAction("Move");
+    }
 
     void Update()
     {
@@ -45,9 +54,9 @@ public class PlayerMovement : MonoBehaviour
             velocity.y = 0; 
         }
 
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
-        Vector3 direction = new Vector3(horizontal, 0, vertical).normalized;
+        // read movement inputs and move accordingly
+        Vector2 rawMoveInput = movement.ReadValue<Vector2>();
+        Vector3 direction = new Vector3(rawMoveInput.x, 0, rawMoveInput.y).normalized;
 
         if (direction.magnitude >= 0.1f)
         {
@@ -61,12 +70,14 @@ public class PlayerMovement : MonoBehaviour
             controller.Move(moveDirection.normalized * speed * Time.deltaTime);
         }
         AnimateRunning(direction.magnitude);
+    }
 
-
-        // jump handling
+    public void Jump(InputAction.CallbackContext context)
+    {
+        Debug.Log("jump function called");
         // todo: this gives you WACKY air acceleration which i don't like
         // todo: we shouldn't keep trying to move upwards if we bonk our head on something
-        if (Input.GetButtonDown("Jump") && isGrounded)
+        if (isGrounded && context.performed) // on button down exclusively, i think
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             StartCoroutine(AnimateJump());
